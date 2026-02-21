@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoodNova – Mental Health Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e14;
+    --surface: #16161f;
+    --surface2: #1e1e2c;
+    --border: #2a2a3d;
+    --accent: #7c6af7;
+    --accent2: #f76ac3;
+    --accent3: #6af7c8;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --danger: #f76a6a;
+    --warn: #f7c46a;
+    --success: #6af79e;
+    --radius: 16px;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Utility ── */
+  .hidden { display: none !important; }
+  .btn {
+    padding: 12px 28px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    transition: all .25s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #9580ff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,106,247,.35); }
+  .btn-secondary { background: transparent; border: 2px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+  .btn-outline:hover { background: var(--accent); color: #fff; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    width: 100%;
+    transition: border-color .2s;
+    outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  label { font-size: 13px; color: var(--muted); margin-bottom: 6px; display: block; font-weight: 500; }
+  .form-group { margin-bottom: 18px; }
+  .tag { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+
+  /* ── POPUP / MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 92%;
+    text-align: center;
+    animation: popIn .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes popIn { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-icon { font-size: 52px; margin-bottom: 16px; }
+  .modal h2 { font-family: var(--font-display); font-size: 26px; margin-bottom: 10px; }
+  .modal p { color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+
+  /* ── LANDING / AUTH pages ── */
+  #page-landing {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 0%, rgba(124,106,247,.18) 0%, transparent 65%),
+                radial-gradient(ellipse at 80% 80%, rgba(247,106,195,.1) 0%, transparent 60%), var(--bg);
+    padding: 40px 20px;
+  }
+  .logo-mark { font-family: var(--font-display); font-size: 52px; font-weight: 900; }
+  .logo-mark span { color: var(--accent); }
+  .tagline { color: var(--muted); font-size: 18px; margin: 12px 0 40px; }
+  .hero-orbs {
+    position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+    overflow: hidden; pointer-events: none;
+  }
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: .25;
+    animation: drift 8s ease-in-out infinite alternate;
+  }
+  .orb1 { width: 400px; height: 400px; background: var(--accent); top: -100px; left: -100px; }
+  .orb2 { width: 300px; height: 300px; background: var(--accent2); bottom: -50px; right: -50px; animation-delay: 2s; }
+  .orb3 { width: 200px; height: 200px; background: var(--accent3); top: 40%; left: 60%; animation-delay: 4s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.1); } }
+  .landing-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+  /* ── PRE-REGISTRATION FORM ── */
+  #page-prereg {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+    background: var(--bg);
+  }
+  .prereg-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 520px;
+    width: 100%;
+  }
+  .prereg-box h2 { font-family: var(--font-display); font-size: 28px; margin-bottom: 6px; }
+  .prereg-box .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  /* ── AUTH forms ── */
+  #page-login, #page-signup {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse at 20% 50%, rgba(124,106,247,.12) 0%, transparent 60%), var(--bg);
+  }
+  .auth-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 440px;
+    width: 100%;
+  }
+  .auth-box h2 { font-family: var(--font-display); font-size: 30px; margin-bottom: 4px; }
+  .auth-box .sub { color: var(--muted); margin-bottom: 28px; font-size: 14px; }
+  .auth-link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+  /* ── NAVBAR ── */
+  #navbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 64px;
+    background: rgba(14,14,20,.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    z-index: 900;
+  }
+  .nav-logo { font-family: var(--font-display); font-size: 22px; font-weight: 900; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all .2s;
+    border: none; background: none;
+  }
+  .nav-link:hover, .nav-link.active { color: var(--text); background: var(--surface2); }
+  .nav-link.active { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+
+  /* ── MAIN CONTENT AREA ── */
+  #app-container {
+    padding-top: 64px;
+    min-height: 100vh;
+  }
+  .page-content {
+    padding: 40px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 { font-family: var(--font-display); font-size: 36px; margin-bottom: 6px; }
+  .page-header p { color: var(--muted); }
+
+  /* ── HOME PAGE ── */
+  .home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) { .home-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .home-grid { grid-template-columns: 1fr; } .nav-links { display: none; } }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.mood::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .stat-card.sleep::before { background: linear-gradient(90deg, var(--accent3), var(--accent)); }
+  .stat-card.stress::before { background: linear-gradient(90deg, var(--accent2), var(--danger)); }
+  .stat-num { font-size: 48px; font-weight: 700; margin: 8px 0; }
+  .stat-label { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+  .stat-emoji { font-size: 28px; margin-bottom: 4px; }
+  .quote-card {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(124,106,247,.15), rgba(247,106,195,.1));
+    border: 1px solid rgba(124,106,247,.3);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+  }
+  .quote-card blockquote { font-family: var(--font-display); font-size: 22px; line-height: 1.5; color: var(--text); }
+  .quote-card cite { color: var(--muted); font-size: 13px; margin-top: 10px; display: block; }
+
+  /* ── WEEKLY GRAPH ── */
+  .graph-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+  .chart-area { width: 100%; height: 280px; position: relative; }
+  .chart-bars { display: flex; align-items: flex-end; justify-content: space-around; height: 240px; gap: 12px; }
+  .bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+  .bar {
+    width: 100%; border-radius: 8px 8px 0 0;
+    background: linear-gradient(180deg, var(--accent), rgba(124,106,247,.3));
+    transition: height .6s cubic-bezier(.34,1.56,.64,1);
+    position: relative; cursor: pointer;
+  }
+  .bar:hover { filter: brightness(1.2); }
+  .bar-val { font-size: 11px; color: var(--muted); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); }
+  .bar-day { font-size: 12px; color: var(--muted); }
+
+  /* ── MOOD CARD ── */
+  .mood-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .mood-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer; transition: all .2s;
+  }
+  .mood-item:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(124,106,247,.2); }
+  .mood-item.selected { border-color: var(--accent); background: rgba(124,106,247,.1); }
+  .mood-emoji-big { font-size: 48px; margin-bottom: 12px; }
+  .mood-name { font-weight: 600; margin-bottom: 4px; }
+  .mood-desc { font-size: 12px; color: var(--muted); }
+
+  /* ── CALENDAR HEATMAP ── */
+  .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .heatmap-cell {
+    aspect-ratio: 1; border-radius: 4px;
+    cursor: pointer; transition: transform .15s;
+    position: relative;
+  }
+  .heatmap-cell:hover { transform: scale(1.2); }
+  .heatmap-cell:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap; z-index: 10;
+  }
+  .heat-0 { background: var(--surface2); }
+  .heat-1 { background: rgba(124,106,247,.25); }
+  .heat-2 { background: rgba(124,106,247,.5); }
+  .heat-3 { background: rgba(124,106,247,.75); }
+  .heat-4 { background: var(--accent); }
+  .heatmap-legend { display: flex; align-items: center; gap: 6px; margin-top: 16px; font-size: 12px; color: var(--muted); }
+  .legend-cell { width: 14px; height: 14px; border-radius: 3px; }
+
+  /* ── HISTORY ── */
+  .history-list { display: flex; flex-direction: column; gap: 12px; }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .history-left { display: flex; align-items: center; gap: 16px; }
+  .history-emoji { font-size: 32px; }
+  .history-date { font-size: 12px; color: var(--muted); }
+  .history-score { font-size: 24px; font-weight: 700; }
+  .score-chip {
+    padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 600;
+  }
+  .chip-low { background: rgba(106,247,158,.15); color: var(--success); }
+  .chip-mild { background: rgba(247,196,106,.15); color: var(--warn); }
+  .chip-mod { background: rgba(247,106,106,.15); color: var(--danger); }
+  .chip-high { background: rgba(247,106,106,.3); color: var(--danger); }
+
+  /* ── ASSESSMENT ── */
+  .assessment-wrap { max-width: 700px; margin: 0 auto; }
+  .progress-bar-wrap { background: var(--surface2); border-radius: 50px; height: 8px; margin-bottom: 36px; overflow: hidden; }
+  .progress-bar-inner { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 50px; transition: width .4s; }
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    animation: slideUp .35s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .q-num { font-size: 13px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+  .q-text { font-family: var(--font-display); font-size: 22px; line-height: 1.4; margin-bottom: 28px; }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option-btn {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: left;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--text);
+    transition: all .2s;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .option-btn:hover { border-color: var(--accent); background: rgba(124,106,247,.08); }
+  .option-btn.selected { border-color: var(--accent); background: rgba(124,106,247,.15); }
+  .option-letter {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--border); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .option-btn.selected .option-letter { background: var(--accent); }
+  .q-nav { display: flex; gap: 12px; margin-top: 24px; }
+
+  /* ── RESULT ── */
+  .result-card {
+    max-width: 600px; margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px;
+    text-align: center;
+  }
+  .result-emoji { font-size: 72px; margin-bottom: 20px; }
+  .result-score { font-size: 64px; font-weight: 900; font-family: var(--font-display); color: var(--accent); }
+  .result-label { font-size: 24px; font-family: var(--font-display); margin: 8px 0 16px; }
+  .result-desc { color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+  .score-meter { background: var(--surface2); border-radius: 50px; height: 12px; overflow: hidden; margin: 20px 0; }
+  .score-meter-fill { height: 100%; border-radius: 50px; transition: width 1s ease; }
+
+  /* ── ADMIN ── */
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  @media (max-width: 700px) { .admin-grid { grid-template-columns: 1fr; } }
+  .admin-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .admin-stat .big-num { font-size: 42px; font-weight: 700; color: var(--accent); }
+  .admin-stat .label { color: var(--muted); font-size: 13px; }
+  .user-table { width: 100%; border-collapse: collapse; }
+  .user-table th { text-align: left; padding: 12px 16px; font-size: 12px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .user-table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid rgba(42,42,61,.5); }
+  .user-table tr:hover td { background: rgba(124,106,247,.04); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     MODAL: Not Eligible
+     ============================================================ -->
+<div class="modal-overlay hidden" id="not-eligible-modal">
+  <div class="modal">
+    <div class="modal-icon">🚫</div>
+    <h2>Not Eligible</h2>
+    <p id="not-eligible-msg">You do not meet the eligibility criteria to use MoodNova at this time.</p>
+    <button class="btn btn-primary" onclick="closeModal('not-eligible-modal')">Go Back</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: LANDING
+     ============================================================ -->
+<div id="page-landing">
+  <div class="hero-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+  <div style="position:relative;z-index:1">
+    <div class="logo-mark">Mood<span>Nova</span> 🌙</div>
+    <p class="tagline">Track your mental wellbeing — one day at a time.</p>
+    <div class="landing-btns">
+      <button class="btn btn-primary" onclick="showPage('page-prereg')">Get Started</button>
+      <button class="btn btn-secondary" onclick="showPage('page-login')">Log In</button>
+      <button class="btn btn-secondary" style="border-color:var(--accent2);color:var(--accent2)" onclick="showPage('page-admin-login')">Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: PRE-REGISTRATION ELIGIBILITY
+     ============================================================ -->
+<div id="page-prereg" class="hidden">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:var(--bg)">
+    <div class="prereg-box">
+      <p style="font-size:13px;color:var(--accent);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Step 1 of 2</p>
+      <h2>Eligibility Check</h2>
+      <p class="sub">We need a few details before creating your account. All information is confidential.</p>
+
+      <div class="form-group">
+        <label>Your Age *</label>
+        <input type="number" id="pre-age" placeholder="Enter your age" min="1" max="120">
+      </div>
+      <div class="form-group">
+        <label>Gender *</label>
+        <select id="pre-gender">
+          <option value="">Select gender</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Location Type *</label>
+        <select id="pre-location">
+          <option value="">Select location</option>
+          <option>Rural</option>
+          <option>Urban</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Marital Status *</label>
+        <select id="pre-marital" onchange="toggleMaritalFields()">
+          <option value="">Select status</option>
+          <option>Unmarried</option>
+          <option>Married</option>
+          <option>Divorcee</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="kids-group">
+        <label>Number of Children</label>
+        <select id="pre-kids">
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">More than 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Employment Status *</label>
+        <select id="pre-employment" onchange="toggleWorkFields()">
+          <option value="">Select</option>
+          <option value="not_working">Not Working</option>
+          <option value="working">Working</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="work-type-group">
+        <label>Type of Employment</label>
+        <select id="pre-work-type">
+          <option value="">Select type</option>
+          <option>Business Person</option>
+          <option>Employee</option>
+          <option>Govt Employee</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <button class="btn btn-secondary" onclick="showPage('page-landing')">← Back</button>
+        <button class="btn btn-primary" style="flex:1" onclick="checkEligibility()">Continue →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: SIGN UP
+     ============================================================ -->
+<div id="page-signup" class="hidden">
+  <div id="page-login" style="position:static;min-height:auto;"><!-- reuse login bg --></div>
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:radial-gradient(ellipse at 80% 50%,rgba(247,106,195,.12) 0%,transparent 60%),var(--bg)">
+    <div class="auth-box">
+      <h2>Create Account 🌿</h2>
+      <p class="sub">Join MoodNova and start your wellbeing journey</p>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="su-name" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="su-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="su-password" placeholder="Create a strong password">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:16px" onclick="doSignup()">Create Account</button>
+      <p style="font-size:14px;color:var(--muted);text-align:center">
+        Already have an account? <span class="auth-link" onclick="showPage('page-login')">Log in</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: LOGIN
+     ============================================================ -->
+<div id="page-login" class="hidden">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:radial-gradient(ellipse at 20% 50%,rgba(124,106,247,.12) 0%,transparent 60%),var(--bg)">
+    <div class="auth-box">
+      <h2>Welcome Back 👋</h2>
+      <p class="sub">Log in to continue your journey with MoodNova</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="li-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="li-password" placeholder="Your password">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:16px" onclick="doLogin()">Log In</button>
+      <p style="font-size:14px;color:var(--muted);text-align:center">
+        Don't have an account? <span class="auth-link" onclick="showPage('page-prereg')">Sign up</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: ADMIN LOGIN
+     ============================================================ -->
+<div id="page-admin-login" class="hidden">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:radial-gradient(ellipse at 50% 20%,rgba(247,106,106,.12) 0%,transparent 60%),var(--bg)">
+    <div class="auth-box">
+      <h2 style="color:var(--accent2)">Admin Portal 🛡️</h2>
+      <p class="sub">Restricted access — authorised personnel only</p>
+      <div class="form-group">
+        <label>Admin Username</label>
+        <input type="text" id="adm-user" placeholder="admin">
+      </div>
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="adm-pass" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" style="width:100%;background:var(--accent2);margin-bottom:16px" onclick="doAdminLogin()">Access Dashboard</button>
+      <p style="font-size:14px;color:var(--muted);text-align:center">
+        <span class="auth-link" onclick="showPage('page-landing')">← Back to home</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="app-container" class="hidden">
+  <!-- Navbar -->
+  <nav id="navbar">
+    <div class="nav-logo">Mood<span>Nova</span></div>
+    <div class="nav-links" id="nav-links">
+      <button class="nav-link active" onclick="showTab('home')">🏠 Home</button>
+      <button class="nav-link" onclick="showTab('weekly')">📈 Weekly Graph</button>
+      <button class="nav-link" onclick="showTab('moodcard')">🎴 Mood Card</button>
+      <button class="nav-link" onclick="showTab('heatmap')">🗓️ Calendar</button>
+      <button class="nav-link" onclick="showTab('history')">📜 History</button>
+      <button class="nav-link" onclick="showTab('assessment')">🧠 Assessment</button>
+    </div>
+    <div class="nav-right">
+      <span style="font-size:13px;color:var(--muted)" id="nav-username"></span>
+      <div class="avatar" id="nav-avatar" onclick="logout()">U</div>
+    </div>
+  </nav>
+
+  <!-- ── HOME ── -->
+  <div id="tab-home" class="page-content">
+    <div class="page-header">
+      <h1>Good <span id="time-greeting">morning</span>, <span id="user-display-name">Friend</span> 🌟</h1>
+      <p>Here's your mental wellness snapshot for today.</p>
+    </div>
+    <div class="home-grid">
+      <div class="stat-card mood">
+        <div class="stat-emoji">😊</div>
+        <div class="stat-label">Latest Mood Score</div>
+        <div class="stat-num" id="home-score">—</div>
+      </div>
+      <div class="stat-card sleep">
+        <div class="stat-emoji">🌙</div>
+        <div class="stat-label">Total Assessments</div>
+        <div class="stat-num" id="home-total">0</div>
+      </div>
+      <div class="stat-card stress">
+        <div class="stat-emoji">📊</div>
+        <div class="stat-label">Average Score</div>
+        <div class="stat-num" id="home-avg">—</div>
+      </div>
+      <div class="quote-card">
+        <blockquote id="daily-quote">"You don't have to be positive all the time. It's perfectly okay to feel sad, angry, annoyed, frustrated, scared and anxious."</blockquote>
+        <cite>— Lori Deschene</cite>
+      </div>
+    </div>
+    <div style="margin-top:24px;text-align:center">
+      <button class="btn btn-primary" style="font-size:17px;padding:16px 40px" onclick="showTab('assessment')">Take Today's Assessment 🧠</button>
+    </div>
+  </div>
+
+  <!-- ── WEEKLY GRAPH ── -->
+  <div id="tab-weekly" class="page-content hidden">
+    <div class="page-header">
+      <h1>Weekly Graph 📈</h1>
+      <p>Your mood scores over the past 7 days.</p>
+    </div>
+    <div class="graph-container">
+      <div class="chart-area">
+        <div class="chart-bars" id="weekly-bars"></div>
+        <div style="display:flex;justify-content:space-around;margin-top:8px" id="weekly-days"></div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:24px;flex-wrap:wrap">
+        <div><span style="font-size:12px;color:var(--muted)">LOW STRESS</span> <span style="font-size:20px;color:var(--success)">●</span> 10–18</div>
+        <div><span style="font-size:12px;color:var(--muted)">MILD</span> <span style="font-size:20px;color:var(--warn)">●</span> 19–30</div>
+        <div><span style="font-size:12px;color:var(--muted)">MODERATE</span> <span style="font-size:20px;color:var(--danger)">●</span> 31–40</div>
+        <div><span style="font-size:12px;color:var(--muted)">HIGH</span> <span style="font-size:20px;color:#f73a3a">●</span> 41–50</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MOOD CARD ── -->
+  <div id="tab-moodcard" class="page-content hidden">
+    <div class="page-header">
+      <h1>Mood Card 🎴</h1>
+      <p>How are you feeling right now? Tap a mood to log it.</p>
+    </div>
+    <div class="mood-grid">
+      <div class="mood-item" onclick="selectMood(this,'Joyful','😄')">
+        <div class="mood-emoji-big">😄</div>
+        <div class="mood-name">Joyful</div>
+        <div class="mood-desc">Feeling great and uplifted</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Calm','😌')">
+        <div class="mood-emoji-big">😌</div>
+        <div class="mood-name">Calm</div>
+        <div class="mood-desc">Peaceful and balanced</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Neutral','😐')">
+        <div class="mood-emoji-big">😐</div>
+        <div class="mood-name">Neutral</div>
+        <div class="mood-desc">Just getting by today</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Anxious','😟')">
+        <div class="mood-emoji-big">😟</div>
+        <div class="mood-name">Anxious</div>
+        <div class="mood-desc">Worried or stressed</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Sad','😢')">
+        <div class="mood-emoji-big">😢</div>
+        <div class="mood-name">Sad</div>
+        <div class="mood-desc">Feeling down or low</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Angry','😠')">
+        <div class="mood-emoji-big">😠</div>
+        <div class="mood-name">Angry</div>
+        <div class="mood-desc">Frustrated or irritated</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Hopeful','🌱')">
+        <div class="mood-emoji-big">🌱</div>
+        <div class="mood-name">Hopeful</div>
+        <div class="mood-desc">Looking forward to things</div>
+      </div>
+      <div class="mood-item" onclick="selectMood(this,'Tired','😴')">
+        <div class="mood-emoji-big">😴</div>
+        <div class="mood-name">Tired</div>
+        <div class="mood-desc">Drained and fatigued</div>
+      </div>
+    </div>
+    <div id="mood-log-confirm" class="hidden" style="margin-top:24px;text-align:center">
+      <div class="card" style="display:inline-block;padding:24px 40px">
+        <p style="font-size:28px" id="mood-confirm-emoji"></p>
+        <p style="font-size:18px;font-weight:600" id="mood-confirm-name"></p>
+        <p style="color:var(--muted);font-size:13px;margin:8px 0 16px">Mood logged for today!</p>
+        <button class="btn btn-primary" onclick="saveMood()">Save Mood ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CALENDAR HEATMAP ── -->
+  <div id="tab-heatmap" class="page-content hidden">
+    <div class="page-header">
+      <h1>Calendar Heatmap 🗓️</h1>
+      <p>Visual overview of your mood assessments over time.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 style="font-family:var(--font-display);font-size:20px" id="cal-month-label">February 2025</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" style="padding:8px 14px" onclick="changeMonth(-1)">←</button>
+          <button class="btn btn-secondary" style="padding:8px 14px" onclick="changeMonth(1)">→</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Sun</div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Mon</div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Tue</div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Wed</div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Thu</div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Fri</div>
+        <div style="text-align:center;font-size:11px;color:var(--muted)">Sat</div>
+      </div>
+      <div class="heatmap-grid" id="heatmap-grid"></div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        <div class="legend-cell heat-0"></div>
+        <div class="legend-cell heat-1"></div>
+        <div class="legend-cell heat-2"></div>
+        <div class="legend-cell heat-3"></div>
+        <div class="legend-cell heat-4"></div>
+        <span>More stressed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HISTORY ── -->
+  <div id="tab-history" class="page-content hidden">
+    <div class="page-header">
+      <h1>Assessment History 📜</h1>
+      <p>All your past mood assessments in one place.</p>
+    </div>
+    <div class="history-list" id="history-list">
+      <p style="color:var(--muted);text-align:center;padding:40px">No assessments yet. Take your first one!</p>
+    </div>
+  </div>
+
+  <!-- ── ASSESSMENT ── -->
+  <div id="tab-assessment" class="page-content hidden">
+    <div class="assessment-wrap">
+      <div class="page-header">
+        <h1>Assessment 🧠</h1>
+        <p>10 questions to gauge your current mood & stress level.</p>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-inner" id="q-progress" style="width:10%"></div>
+      </div>
+      <div id="assessment-questions"></div>
+      <div id="assessment-result" class="hidden"></div>
+    </div>
+  </div>
+
+</div><!-- /app-container -->
+
+<!-- ============================================================
+     ADMIN APP
+     ============================================================ -->
+<div id="admin-container" class="hidden">
+  <nav id="navbar" style="position:fixed;top:0;left:0;right:0;height:64px;background:rgba(14,14,20,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;z-index:900">
+    <div class="nav-logo">Mood<span style="color:var(--accent2)">Nova</span> Admin</div>
+    <button class="btn btn-secondary" style="padding:8px 20px;font-size:13px" onclick="logout()">Log Out</button>
+  </nav>
+  <div class="page-content" style="padding-top:96px">
+    <div class="page-header">
+      <h1>Admin Dashboard 🛡️</h1>
+      <p>Overview of all users and platform activity.</p>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-stat">
+        <div class="label">Total Users</div>
+        <div class="big-num" id="adm-users">3</div>
+      </div>
+      <div class="admin-stat">
+        <div class="label">Total Assessments</div>
+        <div class="big-num" style="color:var(--accent2)" id="adm-assessments">7</div>
+      </div>
+      <div class="admin-stat">
+        <div class="label">Avg Platform Score</div>
+        <div class="big-num" style="color:var(--accent3)" id="adm-avg">24</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="font-family:var(--font-display);font-size:20px;margin-bottom:20px">User Records</h3>
+      <div style="overflow-x:auto">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Name</th><th>Email</th><th>Age</th><th>Location</th><th>Marital</th><th>Employment</th><th>Assessments</th><th>Avg Score</th>
+            </tr>
+          </thead>
+          <tbody id="admin-user-table">
+            <tr>
+              <td>1</td><td>Priya S.</td><td>priya@email.com</td><td>28</td><td>Urban</td><td>Married</td><td>Employee</td><td>3</td>
+              <td><span class="score-chip chip-mild">25</span></td>
+            </tr>
+            <tr>
+              <td>2</td><td>Raj M.</td><td>raj@email.com</td><td>34</td><td>Rural</td><td>Unmarried</td><td>Business Person</td><td>2</td>
+              <td><span class="score-chip chip-low">17</span></td>
+            </tr>
+            <tr>
+              <td>3</td><td>Anita K.</td><td>anita@email.com</td><td>22</td><td>Urban</td><td>Unmarried</td><td>Not Working</td><td>2</td>
+              <td><span class="score-chip chip-mod">36</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null;
+let eligibilityData = {};
+let assessmentAnswers = {};
+let currentQuestion = 0;
+let calendarMonth = new Date().getMonth();
+let calendarYear = new Date().getFullYear();
+
+// Mock "database" stored in sessionStorage key
+const DB_KEY = 'moodnova_db';
+function getDB() {
+  return JSON.parse(sessionStorage.getItem(DB_KEY) || '{"users":[],"assessments":[]}');
+}
+function saveDB(db) {
+  sessionStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+// Questions
+const questions = [
+  { text: "How are you feeling right now?", opts: ["Very happy and energetic","Calm and normal","Slightly low","Irritated or anxious","Very sad or overwhelmed"] },
+  { text: "How well did you sleep last night?", opts: ["Very well (7–8 hours, refreshed)","Okay (6–7 hours)","Light sleep / disturbed","Slept very late","Hardly slept"] },
+  { text: "How easily do small problems frustrate you?", opts: ["Not at all","Slightly","Sometimes","Often","Almost always"] },
+  { text: "How is your concentration level today?", opts: ["Very focused","Mostly focused","Distracted sometimes","Easily distracted","Cannot concentrate at all"] },
+  { text: "How often do you feel nervous or anxious?", opts: ["Never","Rarely","Sometimes","Often","Almost constantly"] },
+  { text: "How do you react to unexpected situations?", opts: ["Calmly handle them","Slightly stressed but manage","Feel uncomfortable","Panic a little","Panic a lot"] },
+  { text: "How motivated do you feel to do your daily tasks?", opts: ["Very motivated","Motivated","Neutral","Low motivation","No motivation at all"] },
+  { text: "How do you feel physically?", opts: ["Energetic","Normal","Slight headache/tired","Body pain or fatigue","Completely exhausted"] },
+  { text: "How often do you overthink things?", opts: ["Never","Rarely","Sometimes","Often","Constantly"] },
+  { text: "How connected do you feel with others today?", opts: ["Very connected and supported","Connected","Neutral","Slightly isolated","Completely lonely"] }
+];
+
+const quotes = [
+  { text: "You don't have to be positive all the time. It's perfectly okay to feel sad, angry, annoyed, frustrated, scared and anxious.", author: "Lori Deschene" },
+  { text: "Mental health is not a destination, but a process. It's about how you drive, not where you're going.", author: "Noam Shpancer" },
+  { text: "There is hope, even when your brain tells you there isn't.", author: "John Green" },
+  { text: "Self-care is not self-indulgence. Self-care is self-preservation.", author: "Audre Lorde" },
+];
+
+// ============================================================
+// PAGE ROUTING
+// ============================================================
+const pages = ['page-landing','page-prereg','page-signup','page-login','page-admin-login','app-container','admin-container'];
+
+function showPage(id) {
+  pages.forEach(p => document.getElementById(p)?.classList.add('hidden'));
+  document.getElementById(id)?.classList.remove('hidden');
+}
+
+function showTab(tab) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + tab)?.classList.remove('hidden');
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+  const activeBtn = [...document.querySelectorAll('.nav-link')].find(b => b.textContent.toLowerCase().includes(tab === 'home' ? 'home' : tab.slice(0,4)));
+  if (activeBtn) activeBtn.classList.add('active');
+
+  if (tab === 'weekly') renderWeeklyGraph();
+  if (tab === 'heatmap') renderHeatmap();
+  if (tab === 'history') renderHistory();
+  if (tab === 'assessment') startAssessment();
+  if (tab === 'home') updateHome();
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function showModal(msg) {
+  document.getElementById('not-eligible-msg').textContent = msg;
+  document.getElementById('not-eligible-modal').classList.remove('hidden');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+// ============================================================
+// PRE-REGISTRATION / ELIGIBILITY
+// ============================================================
+function toggleMaritalFields() {
+  const v = document.getElementById('pre-marital').value;
+  document.getElementById('kids-group').classList.toggle('hidden', v !== 'Married');
+}
+function toggleWorkFields() {
+  const v = document.getElementById('pre-employment').value;
+  document.getElementById('work-type-group').classList.toggle('hidden', v !== 'working');
+}
+
+function checkEligibility() {
+  const age = parseInt(document.getElementById('pre-age').value);
+  const gender = document.getElementById('pre-gender').value;
+  const location = document.getElementById('pre-location').value;
+  const marital = document.getElementById('pre-marital').value;
+  const employment = document.getElementById('pre-employment').value;
+
+  if (!age || !gender || !location || !marital || !employment) {
+    showModal('Please fill in all required fields before continuing.');
+    return;
+  }
+  if (age <= 15) {
+    showModal('You must be above 15 years old to use MoodNova. This platform is designed for individuals aged 16 and above.');
+    return;
+  }
+
+  // Collect data
+  eligibilityData = {
+    age, gender, location, marital,
+    kids: marital === 'Married' ? document.getElementById('pre-kids').value : 0,
+    employment,
+    workType: employment === 'working' ? document.getElementById('pre-work-type').value : 'N/A'
+  };
+  showPage('page-signup');
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function doSignup() {
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-password').value;
+  if (!name || !email || !password) { alert('Please fill all fields.'); return; }
+
+  const db = getDB();
+  if (db.users.find(u => u.email === email)) { alert('Email already registered. Please log in.'); return; }
+
+  const user = { id: Date.now(), name, email, password, ...eligibilityData, assessments: [] };
+  db.users.push(user);
+  saveDB(db);
+  loginUser(user);
+}
+
+function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const password = document.getElementById('li-password').value;
+  const db = getDB();
+  const user = db.users.find(u => u.email === email && u.password === password);
+  if (!user) { alert('Invalid credentials. Please try again or sign up.'); return; }
+  loginUser(user);
+}
+
+function loginUser(user) {
+  currentUser = user;
+  document.getElementById('nav-username').textContent = user.name;
+  document.getElementById('nav-avatar').textContent = user.name[0].toUpperCase();
+  document.getElementById('user-display-name').textContent = user.name.split(' ')[0];
+
+  const h = new Date().getHours();
+  document.getElementById('time-greeting').textContent = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+
+  const q = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById('daily-quote').textContent = `"${q.text}"`;
+  document.querySelector('.quote-card cite').textContent = `— ${q.author}`;
+
+  showPage('app-container');
+  updateHome();
+}
+
+function doAdminLogin() {
+  const u = document.getElementById('adm-user').value;
+  const p = document.getElementById('adm-pass').value;
+  if (u === 'admin' && p === 'admin123') {
+    showPage('admin-container');
+    updateAdminDashboard();
+  } else {
+    alert('Invalid admin credentials. Use admin / admin123 for demo.');
+  }
+}
+
+function logout() {
+  currentUser = null;
+  showPage('page-landing');
+}
+
+// ============================================================
+// HOME
+// ============================================================
+function updateHome() {
+  if (!currentUser) return;
+  const db = getDB();
+  const user = db.users.find(u => u.id === currentUser.id);
+  const assessments = db.assessments.filter(a => a.userId === currentUser.id);
+  document.getElementById('home-total').textContent = assessments.length;
+  if (assessments.length) {
+    const last = assessments[assessments.length - 1];
+    document.getElementById('home-score').textContent = last.score;
+    const avg = Math.round(assessments.reduce((s, a) => s + a.score, 0) / assessments.length);
+    document.getElementById('home-avg').textContent = avg;
+  } else {
+    document.getElementById('home-score').textContent = '—';
+    document.getElementById('home-avg').textContent = '—';
+  }
+}
+
+// ============================================================
+// WEEKLY GRAPH
+// ============================================================
+function renderWeeklyGraph() {
+  const db = getDB();
+  const assessments = db.assessments.filter(a => a.userId === currentUser.id);
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today = new Date();
+  const barsEl = document.getElementById('weekly-bars');
+  const daysEl = document.getElementById('weekly-days');
+  barsEl.innerHTML = '';
+  daysEl.innerHTML = '';
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const ds = d.toDateString();
+    const record = assessments.find(a => new Date(a.date).toDateString() === ds);
+    const score = record ? record.score : 0;
+    const pct = score ? (score / 50) * 220 : 4;
+    const color = score <= 18 ? 'var(--success)' : score <= 30 ? 'var(--warn)' : score <= 40 ? 'var(--danger)' : '#f73a3a';
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'bar-wrap';
+    barWrap.innerHTML = `
+      <div class="bar" style="height:${pct}px;background:linear-gradient(180deg,${color},${color}44)" title="Score: ${score || 'No data'}">
+        ${score ? `<span class="bar-val">${score}</span>` : ''}
+      </div>
+    `;
+    barsEl.appendChild(barWrap);
+
+    const dayEl = document.createElement('div');
+    dayEl.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);flex:1';
+    dayEl.textContent = days[d.getDay()];
+    daysEl.appendChild(dayEl);
+  }
+}
+
+// ============================================================
+// HEATMAP
+// ============================================================
+function renderHeatmap() {
+  const db = getDB();
+  const assessments = db.assessments.filter(a => a.userId === currentUser.id);
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement('div');
+    blank.style.aspectRatio = '1';
+    grid.appendChild(blank);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(calendarYear, calendarMonth, d);
+    const rec = assessments.find(a => new Date(a.date).toDateString() === date.toDateString());
+    const score = rec ? rec.score : 0;
+    const heatLevel = score === 0 ? 0 : score <= 18 ? 1 : score <= 30 ? 2 : score <= 40 ? 3 : 4;
+
+    const cell = document.createElement('div');
+    cell.className = `heatmap-cell heat-${heatLevel}`;
+    cell.setAttribute('data-tip', rec ? `${d}: Score ${score}` : `${d}: No data`);
+    cell.title = rec ? `Score: ${score}` : 'No data';
+    cell.innerHTML = `<div style="text-align:center;font-size:10px;padding-top:4px;color:var(--muted)">${d}</div>`;
+    grid.appendChild(cell);
+  }
+}
+
+function changeMonth(dir) {
+  calendarMonth += dir;
+  if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+  if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+  renderHeatmap();
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function renderHistory() {
+  const db = getDB();
+  const assessments = db.assessments.filter(a => a.userId === currentUser.id).reverse();
+  const el = document.getElementById('history-list');
+  if (!assessments.length) {
+    el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">No assessments yet. Take your first one!</p>';
+    return;
+  }
+  el.innerHTML = assessments.map(a => {
+    const { label, emoji, chipClass } = scoreInfo(a.score);
+    return `
+    <div class="history-item">
+      <div class="history-left">
+        <div class="history-emoji">${emoji}</div>
+        <div>
+          <div style="font-weight:600;font-size:16px">${label}</div>
+          <div class="history-date">${new Date(a.date).toLocaleDateString('en-IN', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="history-score">${a.score}</div>
+        <div class="score-chip ${chipClass}">${label}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function scoreInfo(score) {
+  if (score <= 18) return { label: 'Low Stress', emoji: '😊', chipClass: 'chip-low' };
+  if (score <= 30) return { label: 'Mild Stress', emoji: '😐', chipClass: 'chip-mild' };
+  if (score <= 40) return { label: 'Moderate Stress', emoji: '😟', chipClass: 'chip-mod' };
+  return { label: 'High Stress', emoji: '⚠️', chipClass: 'chip-high' };
+}
+
+// ============================================================
+// ASSESSMENT
+// ============================================================
+function startAssessment() {
+  currentQuestion = 0;
+  assessmentAnswers = {};
+  document.getElementById('assessment-result').classList.add('hidden');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const container = document.getElementById('assessment-questions');
+  const total = questions.length;
+  const q = questions[currentQuestion];
+  const progress = ((currentQuestion + 1) / total) * 100;
+  document.getElementById('q-progress').style.width = progress + '%';
+  const letters = ['A','B','C','D','E'];
+
+  container.innerHTML = `
+    <div class="q-card">
+      <div class="q-num">Question ${currentQuestion + 1} of ${total}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options">
+        ${q.opts.map((opt, i) => `
+          <button class="option-btn ${assessmentAnswers[currentQuestion] === i+1 ? 'selected' : ''}"
+            onclick="selectOption(this, ${i+1})">
+            <div class="option-letter">${letters[i]}</div>
+            <span>${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="q-nav">
+        ${currentQuestion > 0 ? `<button class="btn btn-secondary" onclick="prevQuestion()">← Previous</button>` : ''}
+        <button class="btn btn-primary" style="margin-left:auto" onclick="nextQuestion()">
+          ${currentQuestion === total - 1 ? 'Submit ✓' : 'Next →'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function selectOption(btn, score) {
+  btn.closest('.options').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  btn.querySelector('.option-letter').style.background = 'var(--accent)';
+  assessmentAnswers[currentQuestion] = score;
+}
+
+function nextQuestion() {
+  if (assessmentAnswers[currentQuestion] === undefined) { alert('Please select an answer to continue.'); return; }
+  if (currentQuestion < questions.length - 1) {
+    currentQuestion++;
+    renderQuestion();
+  } else {
+    submitAssessment();
+  }
+}
+
+function prevQuestion() {
+  currentQuestion--;
+  renderQuestion();
+}
+
+function submitAssessment() {
+  const total = Object.values(assessmentAnswers).reduce((a, b) => a + b, 0);
+  const { label, emoji, chipClass } = scoreInfo(total);
+
+  // Save to DB
+  const db = getDB();
+  const entry = { userId: currentUser.id, date: new Date().toISOString(), score: total, label };
+  db.assessments.push(entry);
+  saveDB(db);
+
+  document.getElementById('assessment-questions').innerHTML = '';
+  document.getElementById('q-progress').style.width = '100%';
+
+  const meterColor = total <= 18 ? 'var(--success)' : total <= 30 ? 'var(--warn)' : total <= 40 ? 'var(--danger)' : '#f73a3a';
+  const meterPct = (total / 50) * 100;
+
+  let tips = '';
+  if (total <= 18) tips = 'You\'re doing great! Keep up your healthy habits and routines. Celebrate small wins today.';
+  else if (total <= 30) tips = 'Mild stress is normal. Try a 10-minute walk, deep breathing, or talk to a friend.';
+  else if (total <= 40) tips = 'You\'re feeling moderate stress. Consider journaling, limiting screen time, and prioritising rest.';
+  else tips = 'High stress detected. Please reach out to a trusted person or mental health professional. You are not alone.';
+
+  const result = document.getElementById('assessment-result');
+  result.classList.remove('hidden');
+  result.innerHTML = `
+    <div class="result-card">
+      <div class="result-emoji">${emoji}</div>
+      <div class="result-score">${total}</div>
+      <div style="font-size:13px;color:var(--muted);margin:4px 0">out of 50</div>
+      <div class="score-meter"><div class="score-meter-fill" style="width:0%;background:${meterColor}" id="meter-fill"></div></div>
+      <div class="result-label">${label} ${emoji}</div>
+      <p class="result-desc">${tips}</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showTab('history')">View History 📜</button>
+        <button class="btn btn-outline" onclick="startAssessment()">Retake Assessment</button>
+      </div>
+    </div>`;
+
+  setTimeout(() => {
+    document.getElementById('meter-fill').style.width = meterPct + '%';
+  }, 100);
+}
+
+// ============================================================
+// MOOD CARD
+// ============================================================
+function selectMood(el, name, emoji) {
+  document.querySelectorAll('.mood-item').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('mood-log-confirm').classList.remove('hidden');
+  document.getElementById('mood-confirm-emoji').textContent = emoji;
+  document.getElementById('mood-confirm-name').textContent = name;
+}
+
+function saveMood() {
+  document.getElementById('mood-log-confirm').innerHTML = '<p style="color:var(--success);font-size:18px;font-weight:600">✓ Mood saved successfully!</p>';
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function updateAdminDashboard() {
+  const db = getDB();
+  document.getElementById('adm-users').textContent = db.users.length || 3;
+  document.getElementById('adm-assessments').textContent = db.assessments.length || 7;
+  if (db.assessments.length) {
+    const avg = Math.round(db.assessments.reduce((s, a) => s + a.score, 0) / db.assessments.length);
+    document.getElementById('adm-avg').textContent = avg;
+  }
+
+  const tbody = document.getElementById('admin-user-table');
+  if (db.users.length) {
+    tbody.innerHTML = db.users.map((u, i) => {
+      const userAssessments = db.assessments.filter(a => a.userId === u.id);
+      const avg = userAssessments.length ? Math.round(userAssessments.reduce((s, a) => s + a.score, 0) / userAssessments.length) : '—';
+      const { chipClass } = typeof avg === 'number' ? scoreInfo(avg) : { chipClass: '' };
+      return `<tr>
+        <td>${i+1}</td><td>${u.name}</td><td>${u.email}</td><td>${u.age}</td>
+        <td>${u.location}</td><td>${u.marital}</td><td>${u.workType || u.employment}</td>
+        <td>${userAssessments.length}</td>
+        <td>${avg !== '—' ? `<span class="score-chip ${chipClass}">${avg}</span>` : '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+</script>
+</body>
+</html>
